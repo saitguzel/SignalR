@@ -1,4 +1,4 @@
-param($RootDirectory = (Get-Location), $Framework = "netcoreapp2.1", $Runtime = "win7-x64")
+param($RootDirectory = (Get-Location), $Framework = "netcoreapp2.1", $Runtime = "win7-x64", $CommitHash, $BranchName, $BuildNumber)
 
 # De-Powershell the path
 $RootDirectory = (Convert-Path $RootDirectory)
@@ -23,12 +23,26 @@ $Apps = @{
     "FunctionalTests"= (Join-Path $ClientsTsDir "FunctionalTests")
 }
 
+$BuildMetadataContent = @"
+[assembly: System.Reflection.AssemblyMetadata("CommitHash", "$($CommitHash)")]
+[assembly: System.Reflection.AssemblyMetadata("BranchName", "$($BranchName)")]
+[assembly: System.Reflection.AssemblyMetadata("BuildNumber", "$($BuildNumber)")]
+[assembly: System.Reflection.AssemblyMetadata("BuildDateUtc", "$([DateTime]::UtcNow.ToString("O"))")]
+"@
+
 $Apps.Keys | ForEach-Object {
     $Name = $_
     $Path = $Apps[$_]
 
     $OutputDir = Join-Path $AppsDir $Name
 
-    Write-Host -ForegroundColor Green "Publishing $Name"
-    & "$dotnet" publish --framework $Framework --runtime $Runtime --output $OutputDir $Path
+    # Hacky but it works for now
+    $MetadataPath = Join-Path $Path "BuildMetadata.cs"
+    $BuildMetadataContent > $MetadataPath
+    try {
+        Write-Host -ForegroundColor Green "Publishing $Name"
+        & "$dotnet" publish --framework $Framework --runtime $Runtime --output $OutputDir $Path
+    } finally {
+        Remove-Item $MetadataPath
+    }
 }
