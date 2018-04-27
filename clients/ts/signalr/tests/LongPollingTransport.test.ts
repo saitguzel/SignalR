@@ -6,7 +6,7 @@ import { LongPollingTransport } from "../src/LongPollingTransport";
 import { ConsoleLogger } from "../src/Utils";
 
 import { TestHttpClient } from "./TestHttpClient";
-import { asyncit as it, PromiseSource } from "./Utils";
+import { PromiseSource } from "./Utils";
 
 describe("LongPollingTransport", () => {
     it("shuts down poll after timeout even if server doesn't shut it down on receiving the DELETE", async () => {
